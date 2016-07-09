@@ -288,7 +288,8 @@ object Main {
       unknownExp(exp)
   }
 
-  def unknownExp(exp: Tree)= s"# Unknown ${showRaw(exp)}\n"
+  def unknownExp(exp: Tree)=
+    s"# Unknown ${showRaw(exp)}\n"
 //
 //  def parseTrees(trees: List[Tree], topLebelObjects: Map[String, String]): String = trees match {
 //    case (head :: rest) =>

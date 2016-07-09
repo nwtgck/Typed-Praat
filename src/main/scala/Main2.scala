@@ -11,27 +11,33 @@ object Main2 {
 
     import praat._
 
-    val exp = reify{
-      object Assignment4{
+    val exp = reify {
+      object Assignment4 {
+
+        fileAppend("Data2.txt", "Vowel\tDuration(s)\tF0 at midpoint(s)(Hz)\tMax Intensity(dB)\n")
+
         val soundAssinment4 = SoundByFile("Assignment4")
-        val textGrid        = TextGridByFile("Assignment4")
-        val pitch           = soundAssinment4.toPitch(0.0, 7.5, 600.0)
-////
-        val numberOfLabels  = textGrid.getNumberOfIntervals(1)
-        val intensity       = soundAssinment4.toIntensity(75.0, 0.0, true)
-
-        for(i <- 1 to numberOfLabels){
+        val textGrid = TextGridByFile("Assignment4")
+        val pitch = soundAssinment4.toPitch(0.0, 75.0, 600.0)
+        val numberOfLabels = textGrid.getNumberOfIntervals(1)
+        val intensity = soundAssinment4.toIntensity(75.0, 0.0, true)
+        
+        for (i <- 1 to numberOfLabels) {
           val label = textGrid.getLabelOfInterval(1, i)
-          if(label != ""){
+          if (label != "") {
             val start = textGrid.getStartingPoint(1, i)
-            val end   = textGrid.getEndPoint(1, i)
-            val mid   = 0.5 * (start + end)
+            val end = textGrid.getEndPoint(1, i)
+            val mid = 0.5 * (start + end)
             val meanf = pitch.getValueAtTime(mid, Hertz, Linear)
-            val maxIntensity = intensity.getMaximum(start, end, Parabolic)
+            val maxIntensity = intensity.getMaximum(start, end, Hertz, Parabolic)
             val duration = end - start
-          }
 
+            //            fileAppend("Data2.txt",             StringContext("ab", "cd", "ef").s(label, duration))
+            fileAppend("Data2.txt", s"${label}\t${duration}\t${meanf}\t${maxIntensity}\n")
+            //            StringContext("ab", "cd", "ef").s(label, duration)
+          }
         }
+
       }
     }
 
@@ -71,7 +77,6 @@ object Main2 {
 
     val typedTree = cm.mkToolBox().typecheck(exp.tree)
     println(parseTypedTree(typedTree))
-    println(variableInfos)
 
 
 //    def typeCheck(tree: Tree) = cm.mkToolBox().typecheck(tree)
@@ -87,6 +92,11 @@ object Main2 {
     "getEndPoint" -> "Get end point",
     "getValueAtTime" -> "Get value at time",
     "getMaximum" -> "Get maximum"
+  )
+
+  // Scalaのメソッドからpraatのトップレベルの関数への対応
+  def scalaMethodNameToPratFunctionName = Map(
+    "fileAppend" -> "fileappend"
   )
 
 
@@ -138,8 +148,10 @@ object Main2 {
 
         val stripedVarName = varName.stripSuffix(" ")
 
+        val varIsString = typeTree.toString() == "String"
+
         // 変数情報を追加
-        variableInfos :+= VariableInfo(stripedVarName, typeTree, isString = false)
+        variableInfos :+= VariableInfo(stripedVarName, typeTree, isString = varIsString)
 
 
         // レシーバーの情報を取得
@@ -150,7 +162,7 @@ object Main2 {
             scalaMethodNameToPraatName.get(methodName) match {
               case Some(praatFuncName) =>
                 s"""|selectObject: ${recieverName}${if(reciever.isString) "$" else ""}
-                    |${stripedVarName} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
+                    |${stripedVarName}${if(varIsString) "$" else ""} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
                     |""".stripMargin
               case None =>
                 s"#Unknown function ${methodName}   " + unknownTree(tree)
@@ -178,7 +190,7 @@ object Main2 {
 
         s"""${varNameConsideringStr} = ${parseTypedTree(rightTree)}"""
 
-      case DefDef(modifiers, TermName(funcName), List(), List(), TypeTree(), righSide) =>
+      case DefDef(modifiers, TermName(funcName), _, _, typeTree, righSide) =>
         variableInfos.find(_.varName == funcName) match {
           // なぜか変数と同じ名前の関数も定義されるので、その時は無視する
           case Some(_) => ""
@@ -199,7 +211,14 @@ object Main2 {
         (codes ++ List(returnValue)).map(parseTypedTree).mkString("\n").split("\n").map("\t" + _).mkString("\n") +"\n"
 
       case Ident(TermName(varName)) =>
-        varName.toString
+
+        variableInfos.find(_.varName == varName) match {
+          case Some(VariableInfo(_, _, isString)) =>
+            varName.toString + (if(isString) "$" else "")
+          case None =>
+            varName // Hertzなどはここに引っかかる
+        }
+
 
 
 
@@ -224,14 +243,61 @@ object Main2 {
            |endfor
            |""".stripMargin
 
+      // 引用符「""」を囲まない文字列
+      case Apply(Select(Select(Ident(TermName("package")), TermName("string2RawString")), TermName("apply")), List(rawString)) =>
+        val embeded = rawString match {
+          case Literal(Constant(string)) =>
+            string.toString
+          // use stirng context
+          case Apply(Select(Apply(Select(Ident(TermName("StringContext")), TermName("apply")), midStrList), TermName("s") ), varNameList) =>
 
+            val (Literal(Constant(last))) = midStrList.last
+            ((midStrList zip varNameList).map{case (Literal(Constant(midStr)), Ident(TermName(varName))) =>
+              variableInfos.find(_.varName == varName) match {
+                case Some(VariableInfo(_, _, isString)) =>
+                  s"${midStr}'${varName.toString}${if(isString) "$" else ""}'"
+                case None => "#Unknow Variable unexpcted " +unknownTree(tree)
+              }
+            }.mkString("") + last).replaceAll("\\\\t", "\t").replaceAll("\\\\n", "\n")
+
+
+//            s"${midStrList} ${varNameList}"
+//          case Apply(Select(Select(Ident(TermName("package")), TermName("string2RawString")), TermName("apply")), List(Apply(Select(Apply(Select(Ident(TermName("scala.StringContext")), TermName("apply")), List(Literal(Constant("ab")), Literal(Constant("cd")), Literal(Constant("ef")))), TermName("s")), List(Ident(TermName("label")), Ident(TermName("duration")))))) =>
+//            "OK"
+
+          case _ => "a    " + showRaw(tree) + "        b"
+        }
+
+        embeded
+          .replaceAll("\\t", "'tab\\$'") // タブをtab$にする
+          .replaceAll("\n", "'newline\\$'") // 改行を改行文字変換
+
+
+//      case Apply(Select(Select(Ident(TermName("package")), TermName("string2RawString")), TermName("apply")), List(Apply(Select(Apply(Select(Ident(TermName("StringContext")), TermName("apply")), midStrList ), TermName("s")), List(Ident(TermName("label")), Ident(TermName("duration")))))) =>
+//        "fjdoiaf"
+
+//      case Apply(Select(Apply(Select(Ident(TermName("scala.StringContext")), TermName("apply")), midStrList ), TermName("s")), identList ) =>
+//        "fdajosifajso"
+//
+
+      // top level function
+      case exp@Apply(Select(Ident(TermName("package")) , TermName(scalaFuncName)), args) =>
+        scalaMethodNameToPratFunctionName.get(scalaFuncName) match {
+          case Some(funcName) =>
+            s"${funcName} ${args.map(parseTypedTree).mkString(" ")}"
+          case None => unknownTree(tree)
+        }
+
+      // operator - 演算子
       case exp@Apply(Select(leftHand , TermName(op)), List(rightHand)) =>
 
         // $minus => 「-」などの変換をする
-        val opName = {
-          val _opName = NameTransformer.decode(op)
-          if (_opName == "!=") "<>" else _opName
+        val opName = NameTransformer.decode(op) match {
+          case "!=" => "<>"
+          case "==" => "="
+          case e    => e
         }
+
 
         s"""(${parseTypedTree(leftHand)} ${opName} ${parseTypedTree(rightHand)})"""
 
@@ -352,5 +418,8 @@ object Main2 {
 //      unknownExp(exp)
 //  }
 
-  def unknownTree(exp: Tree)= s"# Unknown ${showRaw(exp)}\n"
+  def unknownTree(exp: Tree)= {
+    exp
+    s"# Unknown ${showRaw(exp)}\n"
+  }
 }
