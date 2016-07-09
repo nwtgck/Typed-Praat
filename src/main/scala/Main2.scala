@@ -1,5 +1,3 @@
-import scala.collection.immutable.::
-import scala.reflect.NameTransformer
 import scala.reflect.runtime.universe._
 
 /**
@@ -39,19 +37,8 @@ object Main2 {
     }
 
 
-    val ifTree = reify{
-      val a = 10
-      if(a == 10){
-        val b = 20
-      }
-    }
-
-    import scala.reflect.runtime.{currentMirror => cm}
-    import scala.tools.reflect.ToolBox
-
-
-    val typedTree = cm.mkToolBox().typecheck(exp.tree)
-    println(parseTypedTree(typedTree))
+    val converter = new ToPraatConverter(exp.tree)
+    println(converter.praatScript)
 
   }
 }

@@ -5,15 +5,15 @@ import scala.reflect.runtime.universe._
 /**
   * Created by Ryo on 2016/07/10.
   */
-class ToPraatConverter(nonTyped: Tree) {
+class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
 
   import scala.reflect.runtime.{currentMirror => cm}
   import scala.tools.reflect.ToolBox
 
 
+  // one time parse
   lazy val praatScript: String = {
     val typedTree = cm.mkToolBox().typecheck(nonTyped)
-    println(parseTypedTree(typedTree))
     parseTypedTree(typedTree)
   }
 
@@ -44,7 +44,7 @@ class ToPraatConverter(nonTyped: Tree) {
   // 変数情報を積み込んでいく
   var variableInfos: List[VariableInfo] = List.empty
 
-  def parseTypedTree(tree: Tree): String = {
+  private[this] def parseTypedTree(tree: Tree): String = {
 
 
 
@@ -138,7 +138,7 @@ class ToPraatConverter(nonTyped: Tree) {
         }
 
       case Block(codes, returnValue) =>
-        (codes ++ List(returnValue)).map(parseTypedTree).mkString("\n").split("\n").map("\t" + _).mkString("\n") +"\n"
+        (codes ++ List(returnValue)).map(parseTypedTree).mkString("\n").split("\n").map(indentSpace + _).mkString("\n") +"\n"
 
       case Ident(TermName(varName)) =>
 
@@ -148,8 +148,6 @@ class ToPraatConverter(nonTyped: Tree) {
           case None =>
             varName // Hertzなどはここに引っかかる
         }
-
-
 
 
       case Apply(TypeApply(Select(Apply(Select(Apply(Select(Ident(predef), TermName("intWrapper")), List(  loopFrom  )), TermName("to")), List( loopTo  )), TermName("foreach")), List(TypeTree())), List(Function(List(ValDef(modifiers, TermName(counterName), TypeTree(), EmptyTree)), block   ))) =>
@@ -234,8 +232,7 @@ class ToPraatConverter(nonTyped: Tree) {
     }
   }
 
-  def unknownTree(exp: Tree)= {
-    exp
+  private[this] def unknownTree(exp: Tree)= {
     s"# Unknown ${showRaw(exp)}\n"
   }
 }
