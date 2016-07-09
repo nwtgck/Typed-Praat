@@ -27,7 +27,7 @@ object Main2 {
             val end   = textGrid.getEndPoint(1, i)
             val mid   = 0.5 * (start + end)
             val meanf = pitch.getValueAtTime(mid, Hertz, Linear)
-            val maxIntensity = intensity.getMaxmum(start, end, Parabolic)
+            val maxIntensity = intensity.getMaximum(start, end, Parabolic)
             val duration = end - start
           }
 
@@ -77,8 +77,16 @@ object Main2 {
 //    def typeCheck(tree: Tree) = cm.mkToolBox().typecheck(tree)
   }
 
+  // Scalaのメソッドとpraatの関数(?)との対応
   def scalaMethodNameToPraatName = Map(
-    "toPitch" -> "to"
+    "toPitch" -> "To Pitch",
+    "getNumberOfIntervals" -> "Get number of intervals",
+    "toIntensity" -> "To Intensity",
+    "getLabelOfInterval" -> "Get label of interval",
+    "getStartingPoint" -> "Get starting point",
+    "getEndPoint" -> "Get end point",
+    "getValueAtTime" -> "Get value at time",
+    "getMaximum" -> "Get maximum"
   )
 
 
@@ -139,9 +147,15 @@ object Main2 {
 
         recieverInfoOpt match {
           case Some(reciever) =>
-            s"""|selectObject: ${recieverName}${if(reciever.isString) "$" else ""}
-                |${stripedVarName} = ${methodName} ${params.map(parseTypedTree).mkString(" ")}
-                |""".stripMargin
+            scalaMethodNameToPraatName.get(methodName) match {
+              case Some(praatFuncName) =>
+                s"""|selectObject: ${recieverName}${if(reciever.isString) "$" else ""}
+                    |${stripedVarName} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
+                    |""".stripMargin
+              case None =>
+                s"#Unknown function ${methodName}   " + unknownTree(tree)
+            }
+
           case None =>
             // レシーバーがvariableInfosに存在しないとき
             unknownTree(tree)
