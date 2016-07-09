@@ -1,6 +1,7 @@
 package praat
 
 import Types._
+import scalaz._
 
 /**
   * Created by Jimmy on 2016/07/08.

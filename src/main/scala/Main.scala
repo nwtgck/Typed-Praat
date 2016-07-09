@@ -16,12 +16,12 @@ object Main {
 
     val exp = reify{
       object Assignment4{
-        val soundAssinment = SoundByFile("Assignment4")
+        val soundAssinment4 = SoundByFile("Assignment4")
         val textGrid        = TextGridByFile("Assignment4")
-        val pitch           = soundAssinment.toPitch(0.0, 7.5, 600.0)
-//
+        val pitch           = soundAssinment4.toPitch(0.0, 7.5, 600.0)
+////
         val numberOfLabels  = textGrid.getNumberOfIntervals(1)
-        val intensity       = soundAssinment.toIntensity(75.0, 0.0, true)
+        val intensity       = soundAssinment4.toIntensity(75.0, 0.0, true)
 
         for(i <- 1 to numberOfLabels){
           val label = textGrid.getLabelOfInterval(1, i)
@@ -61,12 +61,13 @@ object Main {
 //    println(exp.tree)
 //    println(codes.map{(e)=> (e.getClass.getMethod("toString"), e.tpe)})
 
+    codes.foreach(println)
 
     val head = codes.head
 
     val ValDef(Modifiers(_), TermName(varName), typeTree1, Apply(Select(Ident(companion), TermName("apply")), List(Literal(Constant("Assignment4"))))) = head
 
-    println(typeTree1)
+//    println(typeTree1)
 
     val typedTree = cm.mkToolBox().typecheck(exp.tree)
 
@@ -76,6 +77,9 @@ object Main {
     //    println(showRaw(typedTree, printTypes=true))
     //    println(typedTree.asInstanceOf[TypeTree])
     println(parseTypedTree(typedTree))
+
+
+
 //    def typeCheck(tree: Tree) = cm.mkToolBox().typecheck(tree)
   }
 
@@ -112,6 +116,8 @@ object Main {
         // なぜか変数名の最後に空白ができるので、削除
         val stripVarName = varName.stripSuffix(" ")
 
+//        println(tree)
+
         termName.toString match {
           case "SoundByFile" =>
             s"""${stripVarName}$$ = "Sound ${fileName}""""
@@ -121,7 +127,8 @@ object Main {
           case _ => "dummmy-- "
         }
 
-      case ValDef(_, TermName(varName), TypeTree(), Apply(Select(Select(This(TypeName(_)), TermName(recieverName)), TermName(methodName)), params)) =>
+      case ValDef(_, TermName(varName), TypeTree(), Apply(Select(Select(This(TypeName(_)), reciever@TermName(recieverName)), TermName(methodName)), params)) =>
+        reciever
         s"""|selectObject: ${recieverName}
             |${varName} = ${methodName} ${params.map(typeCheckAndParse).mkString(" ")}
             |""".stripMargin
