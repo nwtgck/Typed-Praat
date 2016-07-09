@@ -4,7 +4,7 @@
 		module="typed-praat_2.11"
 		revision="1.0"
 		status="integration"
-		publication="20160709110653"
+		publication="20160710071305"
 	>
 		<description>
 		Typed-Praat
@@ -36,5 +36,6 @@
 		<dependency org="org.scala-lang" name="scala-library" rev="2.11.8" conf="scala-tool->default,optional(default);compile->default(compile)"/>
 		<dependency org="org.scala-lang" name="scala-reflect" rev="2.11.8" conf="compile->default(compile)"/>
 		<dependency org="org.scalaz" name="scalaz-core_2.11" rev="7.3.0-M3" conf="compile->default(compile)"/>
+		<dependency org="org.scalatest" name="scalatest_2.11" rev="2.2.6" conf="compile->default(compile)"/>
 	</dependencies>
 </ivy-module>

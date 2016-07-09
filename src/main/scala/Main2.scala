@@ -21,7 +21,7 @@ object Main2 {
         val pitch = soundAssinment4.toPitch(0.0, 75.0, 600.0)
         val numberOfLabels = textGrid.getNumberOfIntervals(1)
         val intensity = soundAssinment4.toIntensity(75.0, 0.0, true)
-        
+
         for (i <- 1 to numberOfLabels) {
           val label = textGrid.getLabelOfInterval(1, i)
           if (label != "") {

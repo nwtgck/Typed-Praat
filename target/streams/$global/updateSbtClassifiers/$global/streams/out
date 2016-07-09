@@ -1,6 +1,7 @@
 [debug] Other repositories:
 [debug] Default repositories:
 [debug] Using inline dependencies specified in Scala.
+[debug] no default cache defined: set to /Users/Ryo/.ivy2/cache
 [debug] :: resolving dependencies :: default#typed-praat$sbt_2.11;1.0
 [debug] 	confs: [default]
 [debug] 	validate = true
@@ -794,9 +795,9 @@
 [debug] 	[NOT REQUIRED] org.scala-sbt#test-interface;1.0!test-interface.jar
 [debug] 	[NOT REQUIRED] org.scala-sbt#apply-macro;0.13.8!apply-macro.jar
 [debug] 	[NOT REQUIRED] org.scala-lang#scala-library;2.10.5!scala-library.jar
-[debug] :: resolution report :: resolve 399ms :: artifacts dl 8ms
+[debug] :: resolution report :: resolve 949ms :: artifacts dl 20ms
 [debug] 	report for default#typed-praat$sbt_2.11;1.0 default produced in /Users/Ryo/IdeaProjects/Typed-Praat/target/resolution-cache/reports/default-typed-praat$sbt_2.11-default.xml
-[debug] 	resolve done (399ms resolve - 8ms download)
+[debug] 	resolve done (949ms resolve - 20ms download)
 [debug] Using inline dependencies specified in Scala.
 [debug] :: resolving dependencies :: default#typed-praat$sources_2.11;1.0
 [debug] 	confs: [default]
@@ -1178,6 +1179,6 @@
 [debug] 	[NOT REQUIRED] org.scalaz#scalaz-core_2.10;7.1.0!scalaz-core_2.10.jar(src)
 [debug] 	[NOT REQUIRED] org.scala-lang#scala-library;2.10.5!scala-library.jar(src)
 [debug] 	[NOT REQUIRED] org.scalaz#scalaz-effect_2.10;7.1.0!scalaz-effect_2.10.jar(src)
-[debug] :: resolution report :: resolve 42ms :: artifacts dl 7ms
+[debug] :: resolution report :: resolve 68ms :: artifacts dl 15ms
 [debug] 	report for default#typed-praat$sources_2.11;1.0 default produced in /Users/Ryo/IdeaProjects/Typed-Praat/target/resolution-cache/reports/default-typed-praat$sources_2.11-default.xml
-[debug] 	resolve done (42ms resolve - 7ms download)
+[debug] 	resolve done (68ms resolve - 15ms download)
