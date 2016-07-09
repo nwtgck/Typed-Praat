@@ -30,7 +30,7 @@ object Main {
           val end   = textGrid.getEndPoint(1, i)
           val mid   = 0.5 * (start + end)
           val meanf = pitch.getValueAtTime(mid, Hertz, Linear)
-          val maxIntensity = intensity.getMaximum(start, end, Parabolic)
+//          val maxIntensity = intensity.getMaximum(start, end, Parabolic)
           val duration = end - start
 //          }
         }
