@@ -50,12 +50,38 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
 
     tree match {
 
-      case Block(ModuleDef(_, _, Template(_, _, defaultConstructor :: codes))::_ , _) =>
+
+//      case ModuleDef(Modifiers(), TermName("Assignment4"), Template(List(Select(Ident(scala), TypeName("AnyRef"))), noSelfType, List(DefDef(Modifiers(), termNames.CONSTRUCTOR, List(), List(List()), TypeTree(), Block(List(Apply(Select(Super(This(TypeName("Assignment4")), typeNames.EMPTY), termNames.CONSTRUCTOR), List())), Literal(Constant(())))))))
+
+
+      case ModuleDef(_, _, Template(_, _, defaultConstructor :: codes)) =>
 
         codes.map(parseTypedTree).mkString("\n") // TODO parseTreesにする
 
-      case ValDef(_, TermName(varName), typeTree, Apply(Select(Ident(termName), TermName("apply")), List(Literal(Constant(fileName))))) =>
+//      case ValDef(modifiers, TermName(varName), typeTree, Apply(Ident(TermName(term)), List(Literal(Constant(fileName))))) =>
+//
+//        // なぜか変数名の最後に空白ができるので、削除
+//        val stripVarName = varName.stripSuffix(" ")
+//
+//        // 変数の情報を追加
+//        variableInfos :+= VariableInfo(stripVarName, typeTree, isString = true)
+//
+//
+//        term match {
+//          case "SoundByFile" =>
+//            s"""${stripVarName}$$ = "Sound ${fileName}""""
+//          case "TextGridByFile" =>
+//            s"""${stripVarName}$$ = "TextGrid ${fileName}""""
+//
+//          case _ => "dummmy-- "
+//        }
 
+
+      // ParablicやHertzなどのため
+      case Select(Ident(TermName("praat")), name) =>
+        name.toString
+
+      case ValDef(modifiers4, TermName(varName), typeTree, Apply(Select(Select(Ident(TermName("praat")), TermName(term)), TermName("apply")), List(Literal(Constant(fileName))))) =>
 
         // なぜか変数名の最後に空白ができるので、削除
         val stripVarName = varName.stripSuffix(" ")
@@ -64,7 +90,7 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
         variableInfos :+= VariableInfo(stripVarName, typeTree, isString = true)
 
 
-        termName.toString match {
+        term.toString match {
           case "SoundByFile" =>
             s"""${stripVarName}$$ = "Sound ${fileName}""""
           case "TextGridByFile" =>
@@ -72,6 +98,25 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
 
           case _ => "dummmy-- "
         }
+
+//      case ValDef(_, TermName(varName), typeTree, Apply(Select(Ident(termName), TermName("apply")), List(Literal(Constant(fileName))))) =>
+//
+//
+//        // なぜか変数名の最後に空白ができるので、削除
+//        val stripVarName = varName.stripSuffix(" ")
+//
+//        // 変数の情報を追加
+//        variableInfos :+= VariableInfo(stripVarName, typeTree, isString = true)
+//
+//
+//        termName.toString match {
+//          case "SoundByFile" =>
+//            s"""${stripVarName}$$ = "Sound ${fileName}""""
+//          case "TextGridByFile" =>
+//            s"""${stripVarName}$$ = "TextGrid ${fileName}""""
+//
+//          case _ => "dummmy-- "
+//        }
 
       case ValDef(_, TermName(varName), typeTree, Apply(Select(Select(This(TypeName(_)), reciever@TermName(recieverName)), TermName(methodName)), params)) =>
 
@@ -150,7 +195,13 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
         }
 
 
-      case Apply(TypeApply(Select(Apply(Select(Apply(Select(Ident(predef), TermName("intWrapper")), List(  loopFrom  )), TermName("to")), List( loopTo  )), TermName("foreach")), List(TypeTree())), List(Function(List(ValDef(modifiers, TermName(counterName), TypeTree(), EmptyTree)), block   ))) =>
+
+//      case Apply(TypeApply(Select(Apply(Select(Apply(Select(Select(This(TypeName("scala")), scala.Predef), TermName("intWrapper")), List(Literal(Constant(1)))), TermName("to")), List(Select(This(TypeName("Assignment4")), TermName("numberOfLabels")))), TermName("foreach")), List(TypeTree())), List(Function(List(ValDef(modifiers, TermName("i"), TypeTree(), EmptyTree)), Literal(Constant(())))))
+
+
+      case Apply(TypeApply(Select(Apply(Select(Apply(     Select(Select(This(TypeName("scala")), predef), TermName("intWrapper"))  , List(  loopFrom  )), TermName("to")), List( loopTo  )), TermName("foreach")), List(TypeTree())), List(Function(List(ValDef(modifiers, TermName(counterName), TypeTree(), EmptyTree)), block   ))) =>
+
+        //      case Apply(TypeApply(Select(Apply(Select(Apply(Select(Ident(predef), TermName("intWrapper")), List(  loopFrom  )), TermName("to")), List( loopTo  )), TermName("foreach")), List(TypeTree())), List(Function(List(ValDef(modifiers, TermName(counterName), TypeTree(), EmptyTree)), block   ))) =>
 
         variableInfos :+= VariableInfo(counterName, TypeTree(), isString = false) // TODO TypeTree()ではなく本当は型はIntを入れたい
         s"""
@@ -171,13 +222,15 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
            |endfor
            |""".stripMargin
 
+
       // 引用符「""」を囲まない文字列
-      case Apply(Select(Select(Ident(TermName("package")), TermName("string2RawString")), TermName("apply")), List(rawString)) =>
+      case Apply(Select(Select(Select(Ident(TermName("praat")), termNames.PACKAGE), TermName("string2RawString")), TermName("apply")), List(rawString)) =>
+
         val embeded = rawString match {
           case Literal(Constant(string)) =>
             string.toString
           // use stirng context
-          case Apply(Select(Apply(Select(Ident(TermName("StringContext")), TermName("apply")), midStrList), TermName("s") ), varNameList) =>
+          case Apply(Select(Apply(Select(Select(Ident(TermName("scala")), TermName("StringContext")), TermName("apply")), midStrList), TermName("s") ), varNameList) =>
 
             val (Literal(Constant(last))) = midStrList.last
             ((midStrList zip varNameList).map{case (Literal(Constant(midStr)), Ident(TermName(varName))) =>
@@ -189,7 +242,7 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
             }.mkString("") + last)
               .replaceAll("\\\\t", "\t").replaceAll("\\\\n", "\n") // s""を使った時はタブが文字の\tになるのでそれをタブにする
 
-          case _ => unknownTree(tree)
+          case _ => "OK" + unknownTree(tree)
         }
 
         embeded
@@ -198,7 +251,9 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
 
 
       // top level function
-      case exp@Apply(Select(Ident(TermName("package")) , TermName(scalaFuncName)), args) =>
+      case exp@Apply(Select(Select(Ident(TermName("praat")), termNames.PACKAGE) , TermName(scalaFuncName)), args) =>
+
+        //      case exp@Apply(Select(Ident(TermName("package")) , TermName(scalaFuncName)), args) =>
         scalaMethodNameToPratFunctionName.get(scalaFuncName) match {
           case Some(funcName) =>
             s"${funcName} ${args.map(parseTypedTree).mkString(" ")}"
@@ -226,6 +281,9 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
             |endif
          """.stripMargin
 
+      // ingnore import
+      case Import(_, selections) =>
+        ""
 
       case exp =>
         unknownTree(exp)
@@ -233,6 +291,6 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
   }
 
   private[this] def unknownTree(exp: Tree)= {
-    s"# Unknown ${showRaw(exp)}\n"
+    s"# Unknown ${showRaw(exp)}  ${exp}\n"
   }
 }
