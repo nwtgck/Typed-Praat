@@ -9,7 +9,7 @@ import scala.reflect.runtime.universe._
 /**
   * Created by Jimmy on 2016/07/08.
   */
-object Main {
+object PracticeMain {
   def main(args: Array[String]) {
 
     import praat._
