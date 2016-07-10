@@ -13,7 +13,8 @@ package object praat {
 
   // fileappend
   def fileAppend(fileName: RawString, content: RawString): scala.Unit = ()
-//
+
+  //
 //  // tab
 //  val tab$ = "\t"
 //  // new line

@@ -1,3 +1,5 @@
+import praat.annotation.PraatName
+
 import scala.io.Source
 import scala.reflect.runtime.universe._
 

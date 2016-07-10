@@ -1,3 +1,5 @@
+import praat.annotation.PraatName
+
 import scala.collection.immutable.::
 import scala.reflect.NameTransformer
 import scala.reflect.runtime.universe._
@@ -14,21 +16,11 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
   // one time parse
   lazy val praatScript: String = {
     val typedTree = cm.mkToolBox().typecheck(nonTyped)
+
     parseTypedTree(typedTree)
       .split("\n").map(_.stripPrefix(indentSpace)).mkString("\n") // インデントが余計にあるので削除
   }
 
-  // Scalaのメソッドとpraatの関数(?)との対応
-  def scalaMethodNameToPraatName = Map(
-    "toPitch" -> "To Pitch",
-    "getNumberOfIntervals" -> "Get number of intervals",
-    "toIntensity" -> "To Intensity",
-    "getLabelOfInterval" -> "Get label of interval",
-    "getStartingPoint" -> "Get starting point",
-    "getEndPoint" -> "Get end point",
-    "getValueAtTime" -> "Get value at time",
-    "getMaximum" -> "Get maximum"
-  )
 
   // Scalaのメソッドからpraatのトップレベルの関数への対応
   def scalaMethodNameToPratFunctionName = Map(
@@ -60,15 +52,38 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
       val recieverInfoOpt = variableInfos.find(_.varName == recieverName)
 
       recieverInfoOpt match {
-        case Some(reciever) =>
-          scalaMethodNameToPraatName.get(methodName) match {
-            case Some(praatFuncName) =>
-              s"""|selectObject: ${recieverName}${if(reciever.isString) "$" else ""}
-                  |${stripedVarName}${if(varIsString) "$" else ""} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
-                  |""".stripMargin
+        case Some(recieverInfo) =>
+
+          // レシーバーのクラスのパス名を取得 TODO .toStringしない方法でやりたい
+          val recieverClassName = recieverInfo.typeTree.toString
+          // Methodオブジェクトを取得
+          val methodOpt = Class.forName(recieverClassName).getMethods.find(_.getName == methodName)
+
+          methodOpt match {
+            case Some(method) =>
+              val praatNameOpt = Option(method.getAnnotation(classOf[PraatName]))
+              praatNameOpt match {
+                case Some(praatName) =>
+                  val praatFuncName = praatName.name()
+                  s"""|selectObject: ${recieverName}${if(recieverInfo.isString) "$" else ""}
+                      |${stripedVarName}${if(varIsString) "$" else ""} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
+                      |""".stripMargin
+                case None =>
+                  s"#Unknown function ${recieverClassName}.${methodName}" + unknownTree(tree)
+              }
             case None =>
-              s"#Unknown function ${methodName}   " + unknownTree(tree)
+              println("hello")
+              s"#Unexpected ${recieverInfo.typeTree}.$methodName"
           }
+
+//          scalaMethodNameToPraatName.get(methodName) match {
+//            case Some(praatFuncName) =>
+//              s"""|selectObject: ${recieverName}${if(recieverInfo.isString) "$" else ""}
+//                  |${stripedVarName}${if(varIsString) "$" else ""} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
+//                  |""".stripMargin
+//            case None =>
+//              s"#Unknown function ${methodName}   " + unknownTree(tree)
+//          }
 
         case None =>
           // レシーバーがvariableInfosに存在しないとき
@@ -267,7 +282,7 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
         scalaMethodNameToPratFunctionName.get(scalaFuncName) match {
           case Some(funcName) =>
             s"${funcName} ${args.map(parseTypedTree).mkString(" ")}"
-          case None => unknownTree(tree)
+          case None => s"#Unknow method ${scalaFuncName} " + unknownTree(tree)
         }
 
       // operator - 演算子
