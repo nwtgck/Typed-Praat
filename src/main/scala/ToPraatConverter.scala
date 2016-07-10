@@ -21,13 +21,7 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
       .split("\n").map(_.stripPrefix(indentSpace)).mkString("\n") // インデントが余計にあるので削除
   }
 
-
-  // Scalaのメソッドからpraatのトップレベルの関数への対応
-  def scalaMethodNameToPratFunctionName = Map(
-    "fileAppend" -> "fileappend"
-  )
-
-
+  
   // 変数の情報
   case class VariableInfo(varName: String,
                           typeTree: Tree,
@@ -278,12 +272,27 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
       // top level function
       case exp@Apply(Select(Select(Ident(TermName("praat")), termNames.PACKAGE) , TermName(scalaFuncName)), args) =>
 
-        //      case exp@Apply(Select(Ident(TermName("package")) , TermName(scalaFuncName)), args) =>
-        scalaMethodNameToPratFunctionName.get(scalaFuncName) match {
-          case Some(funcName) =>
-            s"${funcName} ${args.map(parseTypedTree).mkString(" ")}"
-          case None => s"#Unknow method ${scalaFuncName} " + unknownTree(tree)
+        Class.forName("praat.package").getMethods.find(_.getName == scalaFuncName) match {
+          case Some(method) =>
+            val praatNameOpt = Option(method.getAnnotation(classOf[PraatName]))
+            praatNameOpt match {
+              case Some(praatName) =>
+                val funcName = praatName.name()
+                s"${funcName} ${args.map(parseTypedTree).mkString(" ")}"
+              case None =>
+                s"#Unset PraatName annotation for ${scalaFuncName} " + unknownTree(tree)
+            }
+          case None =>
+            s"#Unknow method ${scalaFuncName} " + unknownTree(tree)
         }
+
+//
+//        //      case exp@Apply(Select(Ident(TermName("package")) , TermName(scalaFuncName)), args) =>
+//        scalaMethodNameToPratFunctionName.get(scalaFuncName) match {
+//          case Some(funcName) =>
+//            s"${funcName} ${args.map(parseTypedTree).mkString(" ")}"
+//          case None => s"#Unknow method ${scalaFuncName} " + unknownTree(tree)
+//        }
 
       // operator - 演算子
       case exp@Apply(Select(leftHand , TermName(op)), List(rightHand)) =>

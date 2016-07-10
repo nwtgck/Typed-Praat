@@ -1,3 +1,5 @@
+import praat.annotation.PraatName
+
 /**
   * Created by Ryo on 2016/07/09.
   */
@@ -11,7 +13,7 @@ package object praat {
   implicit def string2RawString = RawString
 
 
-  // fileappend
+  @PraatName(name="fileappend")
   def fileAppend(fileName: RawString, content: RawString): scala.Unit = ()
 
   //
