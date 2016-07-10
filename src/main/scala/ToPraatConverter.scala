@@ -15,6 +15,7 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
   lazy val praatScript: String = {
     val typedTree = cm.mkToolBox().typecheck(nonTyped)
     parseTypedTree(typedTree)
+      .split("\n").map(_.stripPrefix(indentSpace)).mkString("\n") // インデントが余計にあるので削除
   }
 
   // Scalaのメソッドとpraatの関数(?)との対応
