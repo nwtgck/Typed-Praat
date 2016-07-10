@@ -48,6 +48,33 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
   private[this] def parseTypedTree(tree: Tree): String = {
 
 
+    // selectObjectするやつ（2回使うので、関数化）
+    def selectObject(typeTree: Tree, stripedVarName: String, recieverName: String, methodName: String, params: List[Tree]) = {
+      val varIsString = typeTree.toString() == "String"
+
+      // 変数情報を追加
+      variableInfos :+= VariableInfo(stripedVarName, typeTree, isString = varIsString)
+
+
+      // レシーバーの情報を取得
+      val recieverInfoOpt = variableInfos.find(_.varName == recieverName)
+
+      recieverInfoOpt match {
+        case Some(reciever) =>
+          scalaMethodNameToPraatName.get(methodName) match {
+            case Some(praatFuncName) =>
+              s"""|selectObject: ${recieverName}${if(reciever.isString) "$" else ""}
+                  |${stripedVarName}${if(varIsString) "$" else ""} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
+                  |""".stripMargin
+            case None =>
+              s"#Unknown function ${methodName}   " + unknownTree(tree)
+          }
+
+        case None =>
+          // レシーバーがvariableInfosに存在しないとき
+          unknownTree(tree)
+      }
+    }
 
     tree match {
 
@@ -119,35 +146,17 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
 //          case _ => "dummmy-- "
 //        }
 
-      case ValDef(_, TermName(varName), typeTree, Apply(Select(Select(This(TypeName(_)), reciever@TermName(recieverName)), TermName(methodName)), params)) =>
 
-
+      // selectObjectしなくては行けない時（implicitなどを使ったメソッドを束縛）
+      case ValDef(_, TermName(varName), typeTree, Apply(Apply(TypeApply(Select(Select(thisMod, TermName(recieverName)), TermName(methodName)), List(TypeTree())), params), List(TypeApply(Select(Select(This(TypeName("scala")), predef), TermName("$conforms")), List(TypeTree()))))) =>
         val stripedVarName = varName.stripSuffix(" ")
-
-        val varIsString = typeTree.toString() == "String"
-
-        // 変数情報を追加
-        variableInfos :+= VariableInfo(stripedVarName, typeTree, isString = varIsString)
+        selectObject(typeTree, stripedVarName, recieverName, methodName, params)
 
 
-        // レシーバーの情報を取得
-        val recieverInfoOpt = variableInfos.find(_.varName == recieverName)
-
-        recieverInfoOpt match {
-          case Some(reciever) =>
-            scalaMethodNameToPraatName.get(methodName) match {
-              case Some(praatFuncName) =>
-                s"""|selectObject: ${recieverName}${if(reciever.isString) "$" else ""}
-                    |${stripedVarName}${if(varIsString) "$" else ""} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
-                    |""".stripMargin
-              case None =>
-                s"#Unknown function ${methodName}   " + unknownTree(tree)
-            }
-
-          case None =>
-            // レシーバーがvariableInfosに存在しないとき
-            unknownTree(tree)
-        }
+      // selectObjectしなくてはいけない時(implicitなどの使っていないメソッドを束縛）
+      case ValDef(_, TermName(varName), typeTree, Apply(Select(Select(This(TypeName(_)), reciever@TermName(recieverName)), TermName(methodName)), params)) =>
+        val stripedVarName = varName.stripSuffix(" ")
+        selectObject(typeTree, stripedVarName, recieverName, methodName, params)
 
 
 
