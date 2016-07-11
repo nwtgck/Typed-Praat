@@ -16,6 +16,9 @@ object Assignment4 {
   val numberOfLabels = textGrid.getNumberOfIntervals(1)
   val intensity = soundAssinment4.toIntensity(75.0, 0.0, subtractMean = true)
 
+  val text = "hello, world"
+  val number = 1
+
   for (i <- 1 to numberOfLabels) {
     val label = textGrid.getLabelOfInterval(1, i)
     if (label != "") {
@@ -26,7 +29,7 @@ object Assignment4 {
       val maxIntensity = intensity.getMaximum(start, end, Parabolic)
       val duration = end - start
 
-      fileAppend("Data2.txt", s"${label}\t${duration}\t${meanf}\t${maxIntensity}\n")
+      fileAppend("Data2.txt", s"${label}\t${duration}\t${meanf}\t${maxIntensity}${text}${number}\n")
     }
   }
 

@@ -17,6 +17,9 @@ object Main {
 
     val parsedTree = tb.parse(fileContent)
 
+
+//    println(showRaw(tb.typecheck(parsedTree)))
+
     val converter = new ToPraatConverter(parsedTree)
     println(converter.praatScript)
 

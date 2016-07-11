@@ -85,6 +85,7 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
       }
     }
 
+    val raw = showRaw(tree)
     tree match {
 
 
@@ -170,17 +171,19 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
 
 
 
-      case ValDef(Modifiers(_), TermName(varName), typeTree, rightTree) =>
+      case ValDef(Modifiers(_), TermName(_varName), typeTree, rightTree) =>
+
+        val stripedVarName = _varName.stripSuffix(" ")
 
         // 変数の型が文字列かどうか
-        val isString = typeTree.toString() == "java.lang.String" // TODO 文字列の比較ではない方法で判定すべきだと思う
+        val isString = typeTree.toString() == "String" // TODO 文字列の比較ではない方法で判定すべきだと思う
 
         // 変数情報を追加
-        variableInfos :+= VariableInfo(varName, typeTree, isString = isString)
+        variableInfos :+= VariableInfo(stripedVarName, typeTree, isString = isString)
 
         // variable name, considering string
         // in praat string variable has suffix $
-        val varNameConsideringStr = if(isString) varName+"$" else varName
+        val varNameConsideringStr = if(isString) stripedVarName+"$" else stripedVarName
 
         s"""${varNameConsideringStr} = ${parseTypedTree(rightTree)}"""
 
@@ -268,13 +271,26 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
           // use stirng context
           case Apply(Select(Apply(Select(Select(Ident(TermName("scala")), TermName("StringContext")), TermName("apply")), midStrList), TermName("s") ), varNameList) =>
 
-            val (Literal(Constant(last))) = midStrList.last
-            ((midStrList zip varNameList).map{case (Literal(Constant(midStr)), Ident(TermName(varName))) =>
+
+            def joinMidStrAndVarName(midStr: Any, varName: String) ={
               variableInfos.find(_.varName == varName) match {
                 case Some(VariableInfo(_, _, isString)) =>
                   s"${midStr}'${varName.toString}${if(isString) "$" else ""}'"
                 case None => "#Unknow Variable unexpcted " +unknownTree(tree)
               }
+            }
+
+            val (Literal(Constant(last))) = midStrList.last
+            ((midStrList zip varNameList).map{
+              case (Literal(Constant(midStr)), Ident(TermName(varName))) =>
+                joinMidStrAndVarName(midStr, varName)
+
+              case (Literal(Constant(midStr)), Select(This(TypeName(_)), TermName(varName))) =>
+                joinMidStrAndVarName(midStr, varName)
+
+              case unexpected =>
+                s"#Unexpected string context ${unexpected} ${showRaw(unexpected)}"
+
             }.mkString("") + last)
               .replaceAll("\\\\t", "\t").replaceAll("\\\\n", "\n") // s""を使った時はタブが文字の\tになるのでそれをタブにする
 
