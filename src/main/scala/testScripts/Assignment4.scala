@@ -23,7 +23,7 @@ object Assignment4 {
       val end = textGrid.getEndPoint(1, i)
       val mid = 0.5 * (start + end)
       val meanf = pitch.getValueAtTime(mid, Hertz, Linear)
-      val maxIntensity = intensity.getMaximum(start, end, Hertz, Parabolic)
+      val maxIntensity = intensity.getMaximum(start, end, Parabolic)
       val duration = end - start
 
       fileAppend("Data2.txt", s"${label}\t${duration}\t${meanf}\t${maxIntensity}\n")

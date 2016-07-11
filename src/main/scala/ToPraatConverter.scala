@@ -21,7 +21,7 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
       .split("\n").map(_.stripPrefix(indentSpace)).mkString("\n") // インデントが余計にあるので削除
   }
 
-  
+
   // 変数の情報
   case class VariableInfo(varName: String,
                           typeTree: Tree,
@@ -205,6 +205,23 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
         (codes ++ List(returnValue)).map(parseTypedTree).mkString("\n").split("\n").map(indentSpace + _).mkString("\n") +"\n"
 
       case Ident(TermName(varName)) =>
+
+        // treeから型を知ることができる =:=ではな<:<を使うと思ったように判定できた
+        if(false) {
+          tree.getClass.getMethods.find(_.getName == "tpe") match {
+            case Some(method) =>
+              println(method)
+              val invoked = method.invoke(tree)
+              import scala.reflect.runtime.universe._
+              val type2 = invoked.asInstanceOf[Type]
+              val eq = type2 <:< typeOf[String]
+              val eq2 = type2 <:< typeOf[Int]
+              val eq3 = type2 <:< typeOf[Double]
+              println(eq, invoked)
+            case None =>
+              println("none")
+          }
+        }
 
         variableInfos.find(_.varName == varName) match {
           case Some(VariableInfo(_, _, isString)) =>
