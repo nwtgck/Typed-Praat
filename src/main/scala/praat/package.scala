@@ -16,6 +16,12 @@ package object praat {
   @PraatName(name="fileappend")
   def fileAppend(fileName: RawString, content: RawString): scala.Unit = ()
 
+  @PraatName(name="echo")
+  def echo(rawString: RawString): scala.Unit = ()
+
+  @PraatName(name="printline")
+  def printLine(rawString: RawString): scala.Unit = ()
+
   //
 //  // tab
 //  val tab$ = "\t"

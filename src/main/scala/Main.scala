@@ -9,7 +9,7 @@ import scala.reflect.runtime.universe._
 object Main {
   def main(args: Array[String]) {
 
-    val fileContent = Source.fromFile("./src/main/scala/testScripts/Assignment4.scala")
+    val fileContent = Source.fromFile("./src/main/scala/testScripts/Test2.scala")
       .mkString("").split("\n").filter(!_.startsWith("package")).mkString("\n") // packageから始まる行を除外する
 
     import scala.tools.reflect.ToolBox

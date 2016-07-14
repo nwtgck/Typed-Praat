@@ -60,7 +60,7 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
                 case Some(praatName) =>
                   val praatFuncName = praatName.name()
                   s"""|selectObject: ${recieverName}${if(recieverInfo.isString) "$" else ""}
-                      |${stripedVarName}${if(varIsString) "$" else ""} = ${praatFuncName}... ${params.map(parseTypedTree).mkString(" ")}
+                      |${stripedVarName}${if(varIsString) "$" else ""} = ${praatFuncName}${if(params.isEmpty) "" else "... "}${params.map(parseTypedTree).mkString(" ")}
                       |""".stripMargin
                 case None =>
                   s"#Unknown function ${recieverClassName}.${methodName}" + unknownTree(tree)
@@ -133,6 +133,9 @@ class ToPraatConverter(nonTyped: Tree, indentSpace: String = "\t") {
             s"""${stripVarName}$$ = "Sound ${fileName}""""
           case "TextGridByFile" =>
             s"""${stripVarName}$$ = "TextGrid ${fileName}""""
+
+          case "IntensityByFile" =>
+            s"""${stripVarName}$$ = "Intensity ${fileName}""""
 
           case _ => "dummmy-- "
         }
