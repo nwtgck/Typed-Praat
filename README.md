@@ -1,9 +1,14 @@
+# Typed Praat
 
-### What is this repository for? ###
+Praat transpiler written in Scala
 
-型安全にPraatスクリプトを書くためのScala -> Praatコンパイラ
+### What is this?
 
-ScalaのコードをPraatスクリプトにコンパイルします
+```
+[Scala DSL for Praat] ==transpile=> [Praat script]  
+```
+
+A Scala code bellow will be transpiled into praat script
 
 ```scala
 import praat._
@@ -37,7 +42,8 @@ object Assignment4 {
 ```
 
 
-コンパイル後のPraatスクリプト
+Here is a praat script transpiled
+
 ```praat
 
 fileappend Data2.txt Vowel'tab$'Duration(s)'tab$'F0 at midpoint(s)(Hz)'tab$'Max Intensity(dB)'newline$'
